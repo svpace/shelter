@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+TST="$(dirname "$(readlink -f "$0")")"
+SUT="$TST/../bin"
+source "$SUT/assert"
+source "$SUT/styled"
+
+bold=$(echo -en "\e[1mBold\e[0m")
+bold_and_red=$(echo -en "\e[1m\e[31mBold and Red\e[0m")
+bold_then_red=$(echo -en "\e[1mBold then\e[0m \e[31mRed\e[0m")
+bold_tab_red=$(echo -en "\e[1mBold\e[0m\t\e[31mRed\e[0m")
+
+assert begin
+assert equals "text" "$(styled text)"
+assert equals "long text" "$(styled long text)"
+assert equals "" "$(styled --bold)"
+assert equals "$bold" "$(styled --bold Bold)"
+assert equals "bold reset" "$(styled --bold --reset bold reset)"
+assert equals "bold after" "$(styled bold after --bold)"
+assert equals "$bold_and_red" "$(styled --bold --red Bold and Red)"
+assert equals "$bold_then_red" "$(styled --bold Bold then --red Red)"
+assert equals "$bold_tab_red" "$(styled --bold Bold -t --red Red)"
+
+assert end
+#assert equals "\e[40mbold\e[0" "$(ALWAYS_COLOR=1 styled --bold bold 2>&1)"
+#assert equals "bold" "$(NO_COLOR=1 styled --bold bold 2>&1)"
+#assert equals \
+#	"text-red | red | r" \
+#	"$(ALWAYS_COLOR=1 styled --text-red text-red \| --red red \| -r r 2>&1)"

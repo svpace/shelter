@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+TST="$(dirname "$(readlink -f "$0")")"
+SUT="$TST/../bin"
+source "$SUT/assertions"
+
+assert equals "A" "A"
+failed=$(assert equals "A" "B")
+expect=$(cat<<-EOF
+	----------------------------------------
+	; ./test/asserions:main():8:
+	;	Assert EQUALS failed
+	;	expect "A"
+	;	actual "B"
+	----------------------------------------
+	EOF
+)
+assert equals "$expect" "$failed"

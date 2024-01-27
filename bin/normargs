@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+normargs() {
+	while [ $# -gt 0 ]; do
+		it="$1"
+		shift
+		case "$it" in
+			-[a-zA-Z0-9][a-zA-Z0-9]*)
+				echo "${it:0:2}"
+				set -- "-${it:2}" "$@"
+				;;
+			--[a-zA-Z0-9]*=*)
+				echo "${it%%=*}"
+				set --  "${it#*=}" "$@"
+				;;
+			*)	
+				echo "$it"
+		esac
+	done
+	set -- "${args[@]}"
+}
+
+[ "${BASH_SOURCE[0]}" == "$0" ] && normargs "$@"

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+each() {
+	while read -r it; do
+		"$@" "$it"
+	done
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+	each "$@"
+fi

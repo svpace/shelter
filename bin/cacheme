@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+source "$(dirname "$(readlink -f "$0")")/slog"
+
+cacheme() {
+	cacheme_usage() {
+		cat << EOF
+Usage: cacheme [options] -- <command>
+
+Execute <command> and store it's output or return a previously cached value
+
+Options
+	--ttl <ttl>		Use cache if no older then <ttl>
+	--help			This help message
+
+EOF
+	}
+	local base="${CHACHEME_DIR:-$HOME/.cache/cacheme}"
+	mkdir -p "$base"
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			--help)
+				cacheme_usage
+				return 0
+				;;
+			--ttl)
+				ttl=$2
+				slog debug "Cache TTL: ${ttl}"
+				shift
+				;;
+			--)
+				shift
+				break
+				;;
+			*)
+				slog error "Unknown parameter $1"
+				;;
+		esac
+		shift
+	done
+	cache="$base/$(echo "$@" | md5sum | cut -f1)"
+	if [ -f "$cache" ] && [ "$(date -r "$cache" -d "+${ttl}seconds" +%s)" -ge "$(date +%s)" ]; then
+		slog debug "Using cached output from $cache"
+		cat "$cache"
+	else
+		"$@" | tee "$cache"
+		slog debug "Caching output at $cache"
+	fi
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+	cacheme "$@"
+fi
+
+
+

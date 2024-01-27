@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2317
+assert() {
+	assert-equals() {
+		title="${BASH_SOURCE[2]}:${FUNCNAME[2]}():${BASH_LINENO[1]}: assert equals \"$1\" \"$2\""
+		if [ "$1" != "$2" ]; then
+			cat <<-EOF | tr -d ';'
+				$title >> FAILED!"
+				;	Assert EQUALS failed
+				;	expect "$1"
+				;	actual "$2"
+			EOF
+			ASSERTIONS_FAILED+=("$title")
+		else
+			echo "$title >> PASSED!"
+			ASSERTIONS_PASSED+=("$title")
+		fi
+	}
+
+	assert-begin() {
+		ASSERTIONS_PASSED=()
+		ASSERTIONS_FAILED=()
+		cat <<-EOF | tr -d ';'
+			;---------------------------------------
+			; Test Started
+			;---------------------------------------
+		EOF
+	}
+
+	assert-end() {
+		cat <<-EOF | tr -d ';'
+			;---------------------------------------
+			; Test Finished
+			;	Assertion passed ${#ASSERTIONS_PASSED[@]}
+			;	Assertion failed ${#ASSERTIONS_FAILED[@]}
+			;---------------------------------------
+		EOF
+	}
+
+	"assert-$@"
+}

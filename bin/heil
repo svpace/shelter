@@ -1,0 +1,5 @@
+head
+echo
+tail
+
+seq 100 | { tee >(head >&2) | tail; } 2>&1;

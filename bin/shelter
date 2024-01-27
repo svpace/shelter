@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+export SHELTER_HOME=${SHELTER_HOME:-"$(dirname "$(readlink -f "$0")")"}
+
+# Aliases
+md() {
+	mkdir -p "$@"
+}
+
+shelter-import() {
+	# shellcheck disable=SC1090
+	source "$SHELTER_HOME/$@"
+}
+
+
+

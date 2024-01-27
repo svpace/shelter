@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+source "$SHELTER_HOME/styles"
+
+declare -A TLOG_LEVELS=(
+	[trace]=10
+	[debug]=20
+	[info]=30
+	[warn]=40
+	[error]=50
+	[none]=60
+)
+
+declare -A TLOG_LABELS=(
+	[trace]=(--bold --green TRACE)
+	[debug]=(--bold --cyan DEBUG)
+	[info]=(--bold --blue "INFO ")
+	[warn]=(--bold --yellow "WARN ")
+	[error]=(--bold --red "ERROR")
+)
+
+TLOG_FORMAT=${TLOG_FORMAT:-}
+
+tlog() {
+	help() {
+		cat <<-EOF
+			Display log messages
+
+			Usage: tlog <level> [<message>]
+
+			Display log message to STDERR if <level> is more
+			severe then environment variable TLOG_LEVEL. Levels (in
+			order of severity): TRACE, DEBUG, INFO, WARN, ERROR
+		EOF
+	}
+	local message=()
+	local level=${TLOG_LEVEL:-info}
+	local format=${TLOG_FORMAT:-label}
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			-l |--level)
+				shift
+				level=$(echo "$1" | tr "[:upper:]" "[:lower:]")
+				;;
+			-f|--format)
+				shift
+				format=$1
+				;;
+			-t|--trace) level=trace ;;
+			-d|--debug) level=debug ;;
+			-i|--info) level=info ;;
+			-w|--warn) level=warn ;;
+			-e|--error) level=error ;;
+			-h|--help)
+				help
+				return 0
+				;;
+			-*)
+				echo "Unknown option \"$1\"" >&2
+				return 4
+				;;
+			*) message+=("$1") ;;
+		esac
+		shift
+	done
+	if [ "${TLOG_LEVELS[${TLOG_LEVEL:-info}]}" -le "${TLOG_LEVELS[$level]:-60}" ]; then
+		for it in $format; do
+			case "$it" in
+				time) echo -en "$(date -Iseconds) " >&2 ;;
+				label) echo -en "[$(styled "${SLOG_LABELS[$level]:-$level}")] " >&2 ;;
+				msg) echo -en "${message[*]}" >&2 ;;
+				*) echo -en "$1" >&2 ;;
+			esac
+		done
+	fi
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+	tlog "$@"
+fi

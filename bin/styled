@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+styled-diagram() {
+	cat <<-EOF
+		@startuml
+
+		usecase state as "
+			- Normal | Style
+			- Reset pending
+			- Space pending
+		"
+		state .. (000)
+
+		(000) --> (001) : text  >> 1
+		(001) --> (001) : text  >> _1
+		(010) --> (011) : text  >> 1
+		(011) --> (011) : text  >> _1
+		(110) --> (011) : text  >> 1
+
+		(000) --> (000) : space >> 1
+		(001) --> (000) : space >> 1
+		(010) --> (010) : space >> 1
+		(011) --> (010) : space >> 1
+		(110) --> (010) : space >> 1
+
+		(000) --> (000) : reset >> 1
+		(001) --> (001) : reset >> 1
+		(010) --> (000) : reset >> 1
+		(011) --> (001) : reset >> 1
+		(110) --> (000) : reset >> 1
+
+		(000) --> (110) : style >> 1
+		(001) --> (110) : style >> _1
+		(010) --> (110) : style >> r1
+		(011) --> (110) : style >> r_1
+		(110) --> (110) : style >> 1
+		@enduml
+	EOF
+}
+
+styled() {
+	help() {
+		cat <<-EOF
+			applyd - display applyd messages
+
+			Usage: applyd <options> [expression]
+
+			Options
+
+			Expression
+
+		EOF
+	}
+
+	local style=""
+	local reset=""
+	local space=""
+	local result=""
+
+	write() {
+		if [ -n "${1//[[:space:]]/}" ]; then
+			result+="$space"
+			space=" "
+		else
+			space=""
+		fi
+		
+		if [ -n "$style" ]; then
+			result+="$style"
+			style=""
+			reset="\e[0m"
+		fi
+		result+="$1"
+	}
+
+	apply() {
+		if [ -n "$ALWAYS_COLOR" ] || { [ -z "$NO_COLOR" ] && [ -t 2 ]; }; then
+			if [ -n "$reset" ]; then
+				result+="$reset"
+				reset=""
+			fi
+			if [ "$1" -ne 0 ]; then
+				style+="\e[$1m"
+			fi
+		fi
+	}
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+
+			# Reset
+			--reset|-z) apply 0 ;;
+
+			# applys
+			--bold) apply 1 ;;
+			--dim) apply 2 ;;
+			--italic) apply 3 ;;
+			--underlined) apply 4 ;;
+			--blink) apply 5 ;;
+			--alt-blink) apply 6 ;;
+			--reverse) apply 7 ;;
+			--invisible) apply 8 ;;
+			--striked) apply 9 ;;
+
+			# Text Colors
+			--text-blak|--black) apply 30 ;;
+			--text-red|--red|-r) apply 31 ;;
+			--text-green|--green|-g) apply 32 ;;
+			--text-yellow|--yellow|-y) apply 33 ;;
+			--text-blue|--blue|-b) apply 34 ;;
+			--text-purple|--purple|-p) apply 35 ;;
+			--text-cyan|--cyan|-c) apply 36 ;;
+			--gray|--grey|--text-gray|--text-grey) apply 37 ;;
+			--text)
+				apply "38;2;$2"
+				shift
+				;;
+			# Back Colors
+			--back-black) apply 40 ;;
+			--back-red) apply 41 ;;
+			--back-green) apply 42 ;;
+			--back-yellow) apply 43 ;;
+			--back-blue) apply 44 ;;
+			--back-purple) apply 45 ;;
+			--back-cyan) apply 46 ;;
+			--back-gray|--back-grey) apply 47 ;;
+			--back)
+				apply "48;2;$2"
+				shift
+				;;
+			--tab|-t) write $'\t' ;;
+			--newline|-n) write $'\n' ;;
+			-*)
+				echo "Unknown option \"$1\"" >&2;
+				return 3
+				;;
+			*) write "$1" ;;
+		esac
+		shift
+	done
+	apply 0
+	echo -en "$result"
+}
+
+[ "${BASH_SOURCE[0]}" == "$0" ] && styled "$@"
